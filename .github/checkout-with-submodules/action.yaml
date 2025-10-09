@@ -1,0 +1,32 @@
+name: "Checkout with optional submodules"
+description: "Checkout a repository and optionally its submodules using a provided SSH key."
+inputs:
+  checkout-submodules:
+    description: "Whether to checkout git submodules (set to false for repos without submodules)"
+    required: false
+    default: "false"
+  ssh-private-key:
+    description: "SSH private key for accessing the repository."
+    required: true
+  ssh-public-key:
+    description: "SSH public key for accessing the repository."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository with token
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.repository }}
+        ssh-key: ${{ inputs.ssh-private-key }}
+        persist-credentials: false
+
+    - name: Checkout submodules
+      if: ${{ inputs.checkout-submodules }}
+      run: |
+        mkdir -p /home/runner/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa
+        echo "${{ secrets.SSH_PUBLIC_KEY }}" > /home/runner/.ssh/id_rsa.pub
+        chmod 600 /home/runner/.ssh/id_rsa
+        chmod 644 /home/runner/.ssh/id_rsa.pub
+        git submodule update --init --recursive
