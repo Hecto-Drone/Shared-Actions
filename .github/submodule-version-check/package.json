@@ -1,0 +1,23 @@
+{
+  "name": "submodule-version-check",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hecto-Drone/submodule-version-check.git"
+  },
+  "keywords": [],
+  "author": "Mathias Hansen",
+  "license": "NONE",
+  "bugs": {
+    "url": "https://github.com/Hecto-Drone/submodule-version-check/issues"
+  },
+  "homepage": "https://github.com/Hecto-Drone/submodule-version-check#readme",
+  "dependencies": {
+    "@actions/core": "^1.9.0",
+    "@actions/exec": "^1.1.1"
+  }
+}
