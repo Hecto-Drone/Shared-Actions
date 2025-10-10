@@ -1,10 +1,6 @@
 name: "Checkout with optional submodules"
 description: "Checkout a repository and optionally its submodules using a provided SSH key."
 inputs:
-  checkout-submodules:
-    description: "Whether to checkout git submodules (set to false for repos without submodules)"
-    required: false
-    default: "false"
   ssh-private-key:
     description: "SSH private key for accessing the repository."
     required: true
@@ -22,7 +18,6 @@ runs:
         persist-credentials: false
 
     - name: Checkout submodules
-      if: ${{ inputs.checkout-submodules }}
       run: |
         mkdir -p ~/.ssh
         echo "${{ inputs.ssh-private-key }}" > ~/.ssh/id_rsa
@@ -31,4 +26,3 @@ runs:
         chmod 644 ~/.ssh/id_rsa.pub
         git submodule update --init --recursive
       shell: bash 
-      else: echo "Skipping submodule checkout - no submodules configured"
