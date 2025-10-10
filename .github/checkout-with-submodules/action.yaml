@@ -31,3 +31,4 @@ runs:
         chmod 644 ~/.ssh/id_rsa.pub
         git submodule update --init --recursive
       shell: bash 
+      else: echo "Skipping submodule checkout - no submodules configured"
