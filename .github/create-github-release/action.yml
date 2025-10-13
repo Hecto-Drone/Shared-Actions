@@ -1,0 +1,59 @@
+name: 'Create GitHub Release'
+description: 'Creates a GitHub release with configurable artifacts and metadata'
+author: 'Hecto-Drone'
+
+inputs:
+  github-token:
+    description: 'GitHub token for creating releases'
+    required: true
+  tag-name:
+    description: 'Tag name for the release'
+    required: true
+  release-name:
+    description: 'Name of the release'
+    required: true
+  artifacts:
+    description: 'Artifacts to include in the release (multiline string)'
+    required: false
+    default: ''
+  draft:
+    description: 'Whether the release should be a draft'
+    required: false
+    default: 'false'
+  prerelease:
+    description: 'Whether the release should be marked as prerelease'
+    required: false
+    default: 'false'
+  build-type:
+    description: 'Build type (debug/release) for release metadata'
+    required: false
+    default: ''
+  project-name:
+    description: 'Name of the project (used in release body if not provided)'
+    required: true
+    default: 'Hecto-Drone'
+outputs:
+  release-id:
+    description: 'ID of the created release'
+    value: ${{ steps.create-release.outputs.id }}
+  release-url:
+    description: 'URL of the created release'
+    value: ${{ steps.create-release.outputs.html_url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create GitHub Release
+      id: create-release
+      uses: ncipollo/release-action@v1
+      with:
+        token: ${{ inputs.github-token }}
+        tag: ${{ inputs.tag-name }}
+        name: ${{ inputs.release-name }}
+        body: | 
+          Automated release for ${{ inputs.project-name }}
+          - Build Type: ${{ inputs.build-type }}
+          - Build Timestamp: ${{ inputs.timestamp }}
+        draft: ${{ inputs.draft }}
+        prerelease: ${{ inputs.prerelease }}
+        artifacts: ${{ inputs.artifacts }}
