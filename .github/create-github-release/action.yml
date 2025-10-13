@@ -53,7 +53,7 @@ runs:
       uses: ncipollo/release-action@v1
       with:
         token: ${{ inputs.github-token }}
-        tag: "${{ inputs.tag-name }}_${{ steps.timestamp.outputs.timestamp }}
+        tag: "${{ inputs.tag-name }}_${{ steps.timestamp.outputs.timestamp }}"
         name: "Automated release - branch: ${{ inputs.tag}} - type: ${{ env.BUILD_TYPE }} - ${{ steps.timestamp.outputs.timestamp }}"
         body: | 
           Automated release for ${{ inputs.project-name }}
