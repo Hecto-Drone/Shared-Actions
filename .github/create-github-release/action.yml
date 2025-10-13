@@ -46,6 +46,7 @@ runs:
     - name: Generate timestamp
       id: timestamp
       run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Create GitHub Release
       id: create-release
