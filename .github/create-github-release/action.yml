@@ -9,9 +9,6 @@ inputs:
   tag-name:
     description: 'Tag name for the release'
     required: true
-  release-name:
-    description: 'Name of the release'
-    required: true
   artifacts:
     description: 'Artifacts to include in the release (multiline string)'
     required: false
@@ -40,16 +37,23 @@ outputs:
     description: 'URL of the created release'
     value: ${{ steps.create-release.outputs.html_url }}
 
+    
+
 runs:
   using: 'composite'
   steps:
+
+    - name: Generate timestamp
+      id: timestamp
+      run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
     - name: Create GitHub Release
       id: create-release
       uses: ncipollo/release-action@v1
       with:
         token: ${{ inputs.github-token }}
         tag: ${{ inputs.tag-name }}
-        name: ${{ inputs.release-name }}
+        name: "Automated release - branch: ${{ inputs.tag}} - type: ${{ env.BUILD_TYPE }} - ${{ steps.timestamp.outputs.timestamp }}"
         body: | 
           Automated release for ${{ inputs.project-name }}
           - Build Type: ${{ inputs.build-type }}
