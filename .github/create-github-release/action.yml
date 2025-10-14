@@ -29,6 +29,15 @@ inputs:
     description: 'Name of the project (used in release body if not provided)'
     required: true
     default: 'Hecto-Drone'
+  create-new:
+    description: 'Whether to create a new release or update existing one'
+    required: false
+    default: 'true'
+  release-name-suffix:
+    description: 'Suffix to append to the release name'
+    required: false
+    default: ''
+
 outputs:
   release-id:
     description: 'ID of the created release'
@@ -37,15 +46,69 @@ outputs:
     description: 'URL of the created release'
     value: ${{ steps.create-release.outputs.html_url }}
 
-    
-
 runs:
   using: 'composite'
   steps:
-
     - name: Generate timestamp
       id: timestamp
       run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Prepare artifacts with suffix
+      id: prepare-artifacts
+      if: ${{ inputs.release-name-suffix != '' }}
+      run: |
+        echo "Preparing artifacts with suffix: ${{ inputs.release-name-suffix }}"
+
+        # Parse the artifacts input (multiline string)
+        artifacts_input="${{ inputs.artifacts }}"
+        modified_artifacts=""
+        
+        # Process each artifact pattern
+        while IFS= read -r artifact_pattern; do
+          if [ -n "$artifact_pattern" ]; then
+            echo "Processing pattern: $artifact_pattern"
+            
+            # Find actual files matching the pattern
+            for file in $artifact_pattern; do
+              if [ -f "$file" ]; then
+                # Extract directory, filename and extension
+                dir=$(dirname "$file")
+                filename=$(basename "$file")
+                name="${filename%.*}"
+                ext="${filename##*.}"
+                
+                # Create new filename with suffix
+                if [ "$name" = "$filename" ]; then
+                  # No extension
+                  new_file="${dir}/${filename}${{ inputs.release-name-suffix }}"
+                else
+                  # Has extension
+                  new_file="${dir}/${name}${{ inputs.release-name-suffix }}.${ext}"
+                fi
+                
+                # Copy file with new name
+                cp "$file" "$new_file"
+                echo "Created: $file -> $new_file"
+                
+                # Add to modified artifacts list
+                if [ -n "$modified_artifacts" ]; then
+                  modified_artifacts="${modified_artifacts}\n${new_file}"
+                else
+                  modified_artifacts="$new_file"
+                fi
+              fi
+            done
+          fi
+        done <<< "$artifacts_input"
+        
+        # Output the modified artifacts list
+        echo "modified_artifacts<<EOF" >> $GITHUB_OUTPUT
+        echo -e "$modified_artifacts" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+        echo "Prepared artifacts:"
+        echo -e "$modified_artifacts"
       shell: bash
 
     - name: Create GitHub Release
@@ -54,11 +117,13 @@ runs:
       with:
         token: ${{ inputs.github-token }}
         tag: "${{ inputs.tag-name }}_${{ steps.timestamp.outputs.timestamp }}"
-        name: "Automated release - branch: ${{ inputs.tag}} - type: ${{ env.BUILD_TYPE }} - ${{ steps.timestamp.outputs.timestamp }}"
+        name: "Automated release - branch: ${{ inputs.tag-name }} - type: ${{ inputs.build-type }} - ${{ steps.timestamp.outputs.timestamp }}"
         body: | 
           Automated release for ${{ inputs.project-name }}
           - Build Type: ${{ inputs.build-type }}
           - Build Timestamp: ${{ steps.timestamp.outputs.timestamp }}
         draft: ${{ inputs.draft }}
         prerelease: ${{ inputs.prerelease }}
-        artifacts: ${{ inputs.artifacts }}
+        artifacts: ${{ inputs.release-name-suffix != '' && steps.prepare-artifacts.outputs.modified_artifacts || inputs.artifacts }}
+        allowUpdates: ${{ inputs.create-new }}
+
