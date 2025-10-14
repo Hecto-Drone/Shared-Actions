@@ -58,7 +58,7 @@ runs:
         body: | 
           Automated release for ${{ inputs.project-name }}
           - Build Type: ${{ inputs.build-type }}
-          - Build Timestamp: ${{ inputs.timestamp }}
+          - Build Timestamp: ${{ steps.timestamp.outputs.timestamp }}
         draft: ${{ inputs.draft }}
         prerelease: ${{ inputs.prerelease }}
         artifacts: ${{ inputs.artifacts }}
