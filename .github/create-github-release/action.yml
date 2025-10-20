@@ -37,8 +37,8 @@ inputs:
     description: 'Suffix to append to the release name'
     required: false
     default: ''
-  release-timestamp-input:
-    description: 'Timestamp of the release creation'
+  release-timestamp:
+    description: 'If tnon-empty, this timestamp will be used for the release; otherwise, a new timestamp will be generated'
     required: false
     default: ''
 
@@ -49,9 +49,6 @@ outputs:
   release-url:
     description: 'URL of the created release'
     value: ${{ steps.create-release.outputs.html_url }}
-  release-timestamp-output:
-    description: 'Timestamp of the release creation'
-    value: ${{ steps.timestamp.outputs.timestamp }}
 
 runs:
   using: 'composite'
@@ -59,19 +56,14 @@ runs:
     - name: Set timestamp
       id: timestamp
       run: |
-        if [ "${{ inputs.create-new }}" = "true" ]; then
-          # Create new release - generate new timestamp
-          echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
-          echo "Generated new timestamp for new release"
+        if [ -n "${{ inputs.release-timestamp }}" ]; then
+          # Use provided timestamp
+          echo "timestamp=${{ inputs.release-timestamp }}" >> $GITHUB_OUTPUT
+          echo "Using provided timestamp: ${{ inputs.release-timestamp }}"
         else
-          # Update existing release - use provided timestamp
-          if [ -n "${{ inputs.release-timestamp-input }}" ]; then
-            echo "timestamp=${{ inputs.release-timestamp-input }}" >> $GITHUB_OUTPUT
-            echo "Using provided timestamp: ${{ inputs.release-timestamp-input }}"
-          else
-            echo "Error: release-timestamp-input is required when create-new is false"
-            exit 1
-          fi
+          # Generate new timestamp
+          echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+          echo "Generated new timestamp"
         fi
       shell: bash
 
@@ -146,5 +138,5 @@ runs:
         draft: ${{ inputs.draft }}
         prerelease: ${{ inputs.prerelease }}
         artifacts: ${{ inputs.release-name-suffix != '' && steps.prepare-artifacts.outputs.modified_artifacts || inputs.artifacts }}
-        allowUpdates: ${{ inputs.create-new }}
+        allowUpdates: ${{ inputs.create-new == 'false' }}
 
